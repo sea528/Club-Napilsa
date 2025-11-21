@@ -28,7 +28,7 @@ const App: React.FC = () => {
   // Google Sheet Configuration
   const [sheetUrl, setSheetUrl] = useState<string>(() => localStorage.getItem('googleSheetUrl') || '');
   
-  // Share URL State (Default to window location, but editable)
+  // Share URL State
   const [shareUrl, setShareUrl] = useState<string>('');
 
   // Refs for focus management styling
@@ -45,7 +45,12 @@ const App: React.FC = () => {
 
   // Initialize share URL on mount
   useEffect(() => {
-    setShareUrl(window.location.href);
+    // If in a development environment or preview, suggest the production URL
+    if (window.location.hostname.includes('localhost') || window.location.hostname.includes('container') || window.location.hostname.includes('quick-change')) {
+        setShareUrl('https://club-napilsa.vercel.app');
+    } else {
+        setShareUrl(window.location.href);
+    }
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -132,6 +137,16 @@ const App: React.FC = () => {
     alert("링크가 복사되었습니다.");
   };
 
+  // Helper to ensure URL has protocol for QR code
+  const getQrCodeUrl = (url: string) => {
+      let finalUrl = url.trim();
+      if (!finalUrl) return '';
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+          finalUrl = 'https://' + finalUrl;
+      }
+      return `https://quickchart.io/qr?text=${encodeURIComponent(finalUrl)}&size=180&margin=1`;
+  };
+
   if (formState === FormState.REVIEWING && result) {
     return (
       <div className="min-h-screen bg-purple-50 pb-12">
@@ -150,14 +165,9 @@ const App: React.FC = () => {
           학생 초대 (스마트폰 접속)
         </h2>
         
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <h3 className="text-red-800 font-bold flex items-center gap-2 mb-1">
-                <Icons.Alert className="w-5 h-5" />
-                QR코드 접속 시 404 오류가 뜨나요?
-            </h3>
-            <p className="text-red-700 text-sm leading-relaxed">
-                현재 위 주소가 <strong>개발자 미리보기 주소(localhost, preview 등)</strong>라면 외부(스마트폰)에서는 접속할 수 없습니다.<br/>
-                <strong>Vercel, Netlify 등으로 배포된 실제 웹사이트 주소</strong>를 아래 칸에 직접 입력해주세요.
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+            <p className="text-gray-700 text-sm leading-relaxed">
+                아래 QR코드를 칠판이나 화면에 띄워주세요. 학생들이 카메라로 스캔하면 바로 접속할 수 있습니다.
             </p>
         </div>
 
@@ -165,7 +175,7 @@ const App: React.FC = () => {
             <div className="bg-white p-2 rounded-lg border border-gray-200 shadow-sm shrink-0 mx-auto md:mx-0">
                 {shareUrl ? (
                     <img 
-                        src={`https://quickchart.io/qr?text=${encodeURIComponent(shareUrl)}&size=180&margin=1`} 
+                        src={getQrCodeUrl(shareUrl)} 
                         alt="접속 QR코드" 
                         className="w-40 h-40"
                     />
@@ -177,14 +187,14 @@ const App: React.FC = () => {
                 <h3 className="font-bold text-lg text-gray-800 mb-2">학생들에게 공유할 링크</h3>
                 
                 <div className="mb-4">
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">현재 접속 URL (수정 가능)</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">현재 접속 URL</label>
                   <div className="flex gap-2">
                     <input 
                       type="text" 
                       value={shareUrl}
                       onChange={(e) => setShareUrl(e.target.value)}
                       className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:border-purple-500 outline-none font-mono"
-                      placeholder="https://your-project-name.vercel.app"
+                      placeholder="https://club-napilsa.vercel.app"
                     />
                     <button 
                         onClick={copyLink}
@@ -195,7 +205,7 @@ const App: React.FC = () => {
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    * 위 주소를 수정하면 왼쪽 QR코드도 자동으로 바뀝니다.
+                    * 입력한 주소에 맞춰 왼쪽 QR코드가 자동으로 생성됩니다.
                   </p>
                 </div>
             </div>
