@@ -24,7 +24,6 @@ const App: React.FC = () => {
 
   // Split Title State
   const [date, setDate] = useState(getTodayString);
-  const [titleSuffix, setTitleSuffix] = useState("");
   const [formDescription, setFormDescription] = useState("나를 사랑하는 필사");
   
   // Date Picker Visibility
@@ -97,7 +96,7 @@ const App: React.FC = () => {
     return `${parseInt(month)}월 ${parseInt(day)}일`;
   };
 
-  const formTitle = `${formatDateDisplay(date)} ${titleSuffix}`;
+  const formTitle = formatDateDisplay(date);
 
   const submitToGoogleSheet = async () => {
     const targetUrl = sheetUrl || DEFAULT_SHEET_URL;
@@ -320,16 +319,16 @@ const App: React.FC = () => {
             <div className="bg-white rounded-lg border border-gray-300 shadow-sm border-t-[10px] border-t-purple-700 relative z-20">
                <div className="absolute -top-[10px] left-0 w-full h-[10px] bg-purple-700 rounded-t-lg"></div>
               <div className="p-6">
-                <div className="flex items-center gap-3 mb-4 group border-b border-transparent focus-within:border-purple-700 hover:border-gray-200 transition-colors pb-1">
+                <div className="flex items-center gap-3 mb-4">
                     
                     {/* Custom Date Picker Trigger & Popover */}
                     <div className="relative" ref={datePickerRef}>
                       <button 
                         onClick={() => setShowDatePicker(!showDatePicker)}
-                        className="text-3xl font-normal text-gray-900 cursor-pointer border-b-2 border-dashed border-gray-300 group-hover/date:border-purple-400 transition-colors whitespace-nowrap flex items-center gap-2 hover:text-purple-700 focus:outline-none"
+                        className="text-3xl font-normal text-gray-900 cursor-pointer border-b-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors whitespace-nowrap flex items-center gap-2 focus:outline-none"
                       >
                           {formatDateDisplay(date)}
-                          <Icons.Calendar className="w-5 h-5 text-gray-400 group-hover/date:text-purple-500" />
+                          <Icons.Calendar className="w-5 h-5 text-gray-400 hover:text-purple-500" />
                       </button>
                       
                       {showDatePicker && (
@@ -342,14 +341,6 @@ const App: React.FC = () => {
                         </div>
                       )}
                     </div>
-
-                    <input
-                        type="text"
-                        value={titleSuffix}
-                        onChange={(e) => setTitleSuffix(e.target.value)}
-                        className="text-3xl font-normal text-gray-900 w-full outline-none bg-transparent"
-                        placeholder="활동 이름"
-                    />
                 </div>
                 <input
                   type="text" 
