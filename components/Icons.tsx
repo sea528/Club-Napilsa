@@ -14,7 +14,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Star,
-  Calendar
+  Calendar,
+  QrCode,
+  Copy
 } from 'lucide-react';
 
 export const Icons = {
@@ -32,5 +34,7 @@ export const Icons = {
   Check: CheckCircle2,
   Alert: AlertCircle,
   Star: Star,
-  Calendar: Calendar
+  Calendar: Calendar,
+  QrCode: QrCode,
+  Copy: Copy
 };

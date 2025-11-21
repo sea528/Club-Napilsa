@@ -27,6 +27,9 @@ const App: React.FC = () => {
   
   // Google Sheet Configuration
   const [sheetUrl, setSheetUrl] = useState<string>(() => localStorage.getItem('googleSheetUrl') || '');
+  
+  // Share URL State (Default to window location, but editable)
+  const [shareUrl, setShareUrl] = useState<string>('');
 
   // Refs for focus management styling
   const studentInfoRef = useRef<HTMLDivElement>(null);
@@ -39,6 +42,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('googleSheetUrl', sheetUrl);
   }, [sheetUrl]);
+
+  // Initialize share URL on mount
+  useEffect(() => {
+    setShareUrl(window.location.href);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -56,15 +64,11 @@ const App: React.FC = () => {
 
   const submitToGoogleSheet = async () => {
     if (!sheetUrl) {
-        // We don't block submission if sheet is not connected, but we log it.
-        // In a real app, we might want to alert the user or queue it.
         console.warn("Google Sheet URL is not configured.");
         return;
     }
     
     try {
-      // Using no-cors for Google Apps Script Web App compatibility from browser
-      // Content-Type text/plain prevents CORS preflight issues
       await fetch(sheetUrl, {
         method: 'POST',
         mode: 'no-cors',
@@ -82,7 +86,6 @@ const App: React.FC = () => {
       console.log('Data submitted to Google Sheet');
     } catch (error) {
       console.error('Error submitting to Google Sheet:', error);
-      // Silent fail for user, but log for debug. The AI feedback is the primary UI feedback.
     }
   };
 
@@ -103,7 +106,6 @@ const App: React.FC = () => {
     setFormState(FormState.SUBMITTING);
     
     try {
-      // Submit to Google Sheet immediately (fire and forget)
       if (sheetUrl) {
         await submitToGoogleSheet();
       }
@@ -125,6 +127,11 @@ const App: React.FC = () => {
     setActiveTab('questions');
   };
 
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareUrl);
+    alert("링크가 복사되었습니다.");
+  };
+
   if (formState === FormState.REVIEWING && result) {
     return (
       <div className="min-h-screen bg-purple-50 pb-12">
@@ -135,11 +142,70 @@ const App: React.FC = () => {
   }
 
   const renderSettings = () => (
-    <div className="max-w-3xl mx-auto mt-8 px-4 animate-fade-in-up">
+    <div className="max-w-3xl mx-auto mt-8 px-4 animate-fade-in-up pb-20">
+      {/* Student Access Section - QR Code */}
+      <div className="bg-white rounded-lg border-l-8 border-l-green-500 border-gray-300 shadow-sm p-6 mb-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Icons.QrCode className="w-6 h-6 text-green-600" />
+          학생 초대 (스마트폰 접속)
+        </h2>
+        
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <h3 className="text-red-800 font-bold flex items-center gap-2 mb-1">
+                <Icons.Alert className="w-5 h-5" />
+                QR코드 접속 시 404 오류가 뜨나요?
+            </h3>
+            <p className="text-red-700 text-sm leading-relaxed">
+                현재 위 주소가 <strong>개발자 미리보기 주소(localhost, preview 등)</strong>라면 외부(스마트폰)에서는 접속할 수 없습니다.<br/>
+                <strong>Vercel, Netlify 등으로 배포된 실제 웹사이트 주소</strong>를 아래 칸에 직접 입력해주세요.
+            </p>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="bg-white p-2 rounded-lg border border-gray-200 shadow-sm shrink-0 mx-auto md:mx-0">
+                {shareUrl ? (
+                    <img 
+                        src={`https://quickchart.io/qr?text=${encodeURIComponent(shareUrl)}&size=180&margin=1`} 
+                        alt="접속 QR코드" 
+                        className="w-40 h-40"
+                    />
+                ) : (
+                    <div className="w-40 h-40 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">URL 입력 필요</div>
+                )}
+            </div>
+            <div className="flex-1 w-full">
+                <h3 className="font-bold text-lg text-gray-800 mb-2">학생들에게 공유할 링크</h3>
+                
+                <div className="mb-4">
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">현재 접속 URL (수정 가능)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={shareUrl}
+                      onChange={(e) => setShareUrl(e.target.value)}
+                      className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:border-purple-500 outline-none font-mono"
+                      placeholder="https://your-project-name.vercel.app"
+                    />
+                    <button 
+                        onClick={copyLink}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded flex items-center gap-2 transition-colors font-medium whitespace-nowrap"
+                    >
+                        <Icons.Copy className="w-4 h-4" />
+                        복사
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    * 위 주소를 수정하면 왼쪽 QR코드도 자동으로 바뀝니다.
+                  </p>
+                </div>
+            </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg border border-gray-300 shadow-sm p-6">
         <h2 className="text-xl font-medium text-gray-900 mb-6 flex items-center gap-2">
           <Icons.Title className="w-6 h-6 text-purple-600" />
-          Google Spreadsheet 연결 설정
+          Google Spreadsheet 연결 설정 (선생님용)
         </h2>
         
         <div className="space-y-6">
@@ -154,9 +220,6 @@ const App: React.FC = () => {
               {TARGET_SHEET_URL}
               <Icons.Import className="w-4 h-4" />
             </a>
-            <p className="text-sm text-blue-800 mt-2">
-              위 시트에 데이터가 자동으로 입력되게 하려면 아래 과정을 한 번만 진행해주세요.
-            </p>
           </div>
 
           <div>
@@ -186,36 +249,27 @@ const App: React.FC = () => {
           </div>
 
           <div className="text-sm text-gray-600 space-y-3 bg-gray-50 p-4 rounded border border-gray-200">
-            <p className="font-bold text-gray-900">배포 순서 (정확히 따라해주세요!)</p>
+            <p className="font-bold text-gray-900">배포 순서</p>
             <ol className="list-decimal pl-5 space-y-2">
                 <li>위 링크의 스프레드시트를 열고, <strong>확장 프로그램 &gt; Apps Script</strong> 클릭</li>
                 <li>기존 코드를 지우고 위 코드를 붙여넣기 후 <strong>저장(Disk 아이콘)</strong></li>
                 <li>우측 상단 <strong>배포 &gt; 새 배포</strong> 클릭</li>
-                <li>톱니바퀴 아이콘 옆 <strong>유형 선택</strong>에서 <strong>웹 앱</strong> 선택</li>
+                <li>유형 선택: <strong>웹 앱</strong></li>
                 <li>
-                    <strong className="text-purple-700">설정 (가장 중요!)</strong>
+                    <strong className="text-purple-700">설정 (중요!)</strong>
                     <ul className="list-disc pl-4 mt-1 space-y-1 text-gray-700">
-                        <li><strong>다음 사용자 권한으로 실행</strong>: <span className="bg-yellow-100 px-1 rounded font-bold">나 (Me)</span></li>
-                        <li><strong>액세스 권한이 있는 사용자</strong>: <span className="bg-yellow-100 px-1 rounded font-bold">모든 사용자 (Anyone)</span></li>
+                        <li>다음 사용자 권한으로 실행: <span className="bg-yellow-100 px-1 rounded font-bold">나 (Me)</span></li>
+                        <li>액세스 권한이 있는 사용자: <span className="bg-yellow-100 px-1 rounded font-bold">모든 사용자 (Anyone)</span></li>
                     </ul>
                 </li>
-                <li><strong>배포</strong> 클릭</li>
-                <li>
-                    <strong>권한 승인 필요</strong> 창이 뜨면:
-                    <ul className="list-disc pl-4 mt-1 text-xs text-gray-500">
-                        <li><strong>권한 검토</strong> 클릭 -> 계정 선택</li>
-                        <li><span className="text-red-500">"확인되지 않은 앱"</span> 화면에서 좌측 하단 <strong>고급(Advanced)</strong> 클릭</li>
-                        <li>맨 아래 <strong>...으로 이동(안전하지 않음)</strong> 클릭</li>
-                        <li><strong>허용</strong> 클릭</li>
-                    </ul>
-                </li>
+                <li>배포 클릭 및 권한 승인 ("안전하지 않음"으로 이동하여 허용)</li>
                 <li>생성된 <strong>웹 앱 URL</strong>을 복사하여 아래 칸에 붙여넣기</li>
             </ol>
           </div>
 
           <div className="pt-4 border-t border-gray-200">
             <label className="block text-sm font-bold text-gray-900 mb-1">
-              웹 앱 URL (Web App URL)
+              Google Apps Script 웹 앱 URL
             </label>
             <input 
               type="text" 
@@ -225,7 +279,7 @@ const App: React.FC = () => {
               className="w-full p-3 border border-gray-300 rounded focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
             />
             <p className="text-xs text-gray-500 mt-2">
-              * 주소가 'exec'로 끝나는지 확인하세요.
+              * 이 주소는 학생 공유용이 아닙니다. 데이터 저장용 백엔드 주소입니다.
             </p>
           </div>
         </div>
