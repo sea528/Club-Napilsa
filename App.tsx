@@ -185,15 +185,32 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-sm text-gray-600 space-y-2">
-            <p>2. 위 링크의 스프레드시트를 엽니다.</p>
-            <p>3. 메뉴에서 <strong>확장 프로그램 &gt; Apps Script</strong>를 클릭합니다.</p>
-            <p>4. 기존 코드를 지우고 위 코드를 붙여넣습니다.</p>
-            <p>5. 우측 상단 <strong>배포 &gt; 새 배포</strong>를 클릭합니다.</p>
-            <p>6. <strong>유형 선택: 웹 앱</strong>을 선택하고,</p>
-            <p>   - 설명: "나필사 연결"</p>
-            <p>   - 액세스 권한이 있는 사용자: <strong>모든 사용자</strong> (중요!)</p>
-            <p>7. <strong>배포</strong>를 누르고, 나오는 <strong>웹 앱 URL</strong>을 복사하여 아래에 붙여넣으세요.</p>
+          <div className="text-sm text-gray-600 space-y-3 bg-gray-50 p-4 rounded border border-gray-200">
+            <p className="font-bold text-gray-900">배포 순서 (정확히 따라해주세요!)</p>
+            <ol className="list-decimal pl-5 space-y-2">
+                <li>위 링크의 스프레드시트를 열고, <strong>확장 프로그램 &gt; Apps Script</strong> 클릭</li>
+                <li>기존 코드를 지우고 위 코드를 붙여넣기 후 <strong>저장(Disk 아이콘)</strong></li>
+                <li>우측 상단 <strong>배포 &gt; 새 배포</strong> 클릭</li>
+                <li>톱니바퀴 아이콘 옆 <strong>유형 선택</strong>에서 <strong>웹 앱</strong> 선택</li>
+                <li>
+                    <strong className="text-purple-700">설정 (가장 중요!)</strong>
+                    <ul className="list-disc pl-4 mt-1 space-y-1 text-gray-700">
+                        <li><strong>다음 사용자 권한으로 실행</strong>: <span className="bg-yellow-100 px-1 rounded font-bold">나 (Me)</span></li>
+                        <li><strong>액세스 권한이 있는 사용자</strong>: <span className="bg-yellow-100 px-1 rounded font-bold">모든 사용자 (Anyone)</span></li>
+                    </ul>
+                </li>
+                <li><strong>배포</strong> 클릭</li>
+                <li>
+                    <strong>권한 승인 필요</strong> 창이 뜨면:
+                    <ul className="list-disc pl-4 mt-1 text-xs text-gray-500">
+                        <li><strong>권한 검토</strong> 클릭 -> 계정 선택</li>
+                        <li><span className="text-red-500">"확인되지 않은 앱"</span> 화면에서 좌측 하단 <strong>고급(Advanced)</strong> 클릭</li>
+                        <li>맨 아래 <strong>...으로 이동(안전하지 않음)</strong> 클릭</li>
+                        <li><strong>허용</strong> 클릭</li>
+                    </ul>
+                </li>
+                <li>생성된 <strong>웹 앱 URL</strong>을 복사하여 아래 칸에 붙여넣기</li>
+            </ol>
           </div>
 
           <div className="pt-4 border-t border-gray-200">
@@ -208,7 +225,7 @@ const App: React.FC = () => {
               className="w-full p-3 border border-gray-300 rounded focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
             />
             <p className="text-xs text-gray-500 mt-2">
-              * 'exec'로 끝나는 URL이어야 합니다.
+              * 주소가 'exec'로 끝나는지 확인하세요.
             </p>
           </div>
         </div>
