@@ -13,8 +13,17 @@ const App: React.FC = () => {
   const [formState, setFormState] = useState<FormState>(FormState.EDITING);
   const [activeTab, setActiveTab] = useState<Tab>('questions');
   
+  // Helper to get today's date string (YYYY-MM-DD)
+  const getTodayString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Split Title State
-  const [date, setDate] = useState("2025-09-09");
+  const [date, setDate] = useState(getTodayString);
   const [titleSuffix, setTitleSuffix] = useState("나필사");
   const [formDescription, setFormDescription] = useState("설문지 설명");
   
@@ -136,26 +145,35 @@ const App: React.FC = () => {
     
     setFormState(FormState.SUBMITTING);
     
-    // 1. Always submit to Google Sheet first
-    // We await it, but since it's no-cors, it resolves quickly even if 'opaque'.
-    await submitToGoogleSheet();
+    // Optimization: Run Google Sheet Submission and AI Analysis in Parallel
+    // This reduces the chance of timeout on mobile devices where sequential awaits can be slow.
+    
+    const sheetSubmissionPromise = submitToGoogleSheet();
+    // Wrap AI analysis in a catch to return null if it fails, so Promise.all doesn't reject immediately
+    const aiAnalysisPromise = analyzeReflection(formData).catch(err => {
+        console.error("AI Analysis internal error:", err);
+        return null; 
+    });
 
-    // 2. Try AI Analysis
-    try {
-      const feedback = await analyzeReflection(formData);
-      setResult(feedback);
-      setFormState(FormState.REVIEWING);
-    } catch (error) {
-      console.error("AI Analysis Failed:", error);
-      
-      // Graceful Fallback:
-      // If AI fails (e.g. missing API Key), we should still consider the submission successful
-      // because the data was sent to the spreadsheet.
-      alert("제출이 완료되었습니다!\n(AI 피드백 생성에는 실패했습니다. 잠시 후 다시 시도하거나 선생님께 문의하세요.)");
-      
-      // Reset form so student can submit another if needed
-      setFormData({ studentInfo: '', impressivePhrase: '', content: '' });
-      setFormState(FormState.EDITING);
+    const [sheetSuccess, feedbackResult] = await Promise.all([
+        sheetSubmissionPromise,
+        aiAnalysisPromise
+    ]);
+
+    if (feedbackResult) {
+        // Success case: We have AI result
+        setResult(feedbackResult);
+        setFormState(FormState.REVIEWING);
+    } else {
+        // Failure case: AI failed
+        // But if Sheet submission worked (or we assume it did because of no-cors), we treat it as partial success
+        console.log("AI Feedback failed, but falling back to sheet success message.");
+        
+        alert("제출이 완료되었습니다!\n(AI 피드백은 네트워크 상태로 인해 생성되지 않았지만, 제출 내용은 선생님께 전달되었습니다.)");
+        
+        // Reset form
+        setFormData({ studentInfo: '', impressivePhrase: '', content: '' });
+        setFormState(FormState.EDITING);
     }
   };
 
