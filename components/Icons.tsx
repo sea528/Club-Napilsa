@@ -16,7 +16,9 @@ import {
   Star,
   Calendar,
   QrCode,
-  Copy
+  Copy,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export const Icons = {
@@ -36,5 +38,7 @@ export const Icons = {
   Star: Star,
   Calendar: Calendar,
   QrCode: QrCode,
-  Copy: Copy
+  Copy: Copy,
+  ChevronLeft: ChevronLeft,
+  ChevronRight: ChevronRight
 };

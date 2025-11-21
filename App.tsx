@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FormHeader } from './components/FormHeader';
 import { FloatingSidebar } from './components/FloatingSidebar';
 import { ResultCard } from './components/ResultCard';
+import { CustomDatePicker } from './components/CustomDatePicker';
 import { analyzeReflection } from './services/geminiService';
 import { FormData, FormState, FeedbackResponse } from './types';
 import { Icons } from './components/Icons';
@@ -16,6 +17,10 @@ const App: React.FC = () => {
   const [date, setDate] = useState("2025-09-09");
   const [titleSuffix, setTitleSuffix] = useState("나필사");
   const [formDescription, setFormDescription] = useState("설문지 설명");
+  
+  // Date Picker Visibility
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const datePickerRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState<FormData>({
     studentInfo: '',
@@ -52,6 +57,22 @@ const App: React.FC = () => {
         setShareUrl(window.location.href);
     }
   }, []);
+
+  // Click outside handler for Date Picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setShowDatePicker(false);
+      }
+    };
+
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -322,22 +343,32 @@ const App: React.FC = () => {
         {activeTab === 'questions' && (
           <div className="space-y-4 animate-fade-in-up">
             {/* Title Card */}
-            <div className="bg-white rounded-lg border border-gray-300 shadow-sm border-t-[10px] border-t-purple-700 relative">
+            <div className="bg-white rounded-lg border border-gray-300 shadow-sm border-t-[10px] border-t-purple-700 relative z-20">
                <div className="absolute -top-[10px] left-0 w-full h-[10px] bg-purple-700 rounded-t-lg"></div>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4 group border-b border-transparent focus-within:border-purple-700 hover:border-gray-200 transition-colors pb-1">
-                    <div className="relative flex items-center group/date">
-                        <input 
-                            type="date" 
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
-                        />
-                        <span className="text-3xl font-normal text-gray-900 cursor-pointer border-b-2 border-dashed border-gray-300 group-hover/date:border-purple-400 transition-colors whitespace-nowrap flex items-center gap-2">
-                            {formatDateDisplay(date)}
-                            <Icons.Calendar className="w-5 h-5 text-gray-400 group-hover/date:text-purple-500" />
-                        </span>
+                    
+                    {/* Custom Date Picker Trigger & Popover */}
+                    <div className="relative" ref={datePickerRef}>
+                      <button 
+                        onClick={() => setShowDatePicker(!showDatePicker)}
+                        className="text-3xl font-normal text-gray-900 cursor-pointer border-b-2 border-dashed border-gray-300 group-hover/date:border-purple-400 transition-colors whitespace-nowrap flex items-center gap-2 hover:text-purple-700 focus:outline-none"
+                      >
+                          {formatDateDisplay(date)}
+                          <Icons.Calendar className="w-5 h-5 text-gray-400 group-hover/date:text-purple-500" />
+                      </button>
+                      
+                      {showDatePicker && (
+                        <div className="absolute top-full left-0 mt-2 z-50">
+                          <CustomDatePicker 
+                            selectedDate={date} 
+                            onChange={setDate} 
+                            onClose={() => setShowDatePicker(false)} 
+                          />
+                        </div>
+                      )}
                     </div>
+
                     <input
                         type="text"
                         value={titleSuffix}
