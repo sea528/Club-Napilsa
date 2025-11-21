@@ -31,7 +31,9 @@ const App: React.FC = () => {
   const [activeField, setActiveField] = useState<string | null>(null);
   
   // Google Sheet Configuration
-  const [sheetUrl, setSheetUrl] = useState<string>(() => localStorage.getItem('googleSheetUrl') || '');
+  // Default to the provided URL
+  const DEFAULT_SHEET_URL = "https://script.google.com/macros/s/AKfycbxQZoFZJR_DuVRfC4pRL185x9onuEG-ywCtwxC6HQEiEsHraX-dCug6HnQEqqsDs3fW/exec";
+  const [sheetUrl, setSheetUrl] = useState<string>(() => localStorage.getItem('googleSheetUrl') || DEFAULT_SHEET_URL);
   
   // Share URL State
   const [shareUrl, setShareUrl] = useState<string>('');
@@ -89,13 +91,10 @@ const App: React.FC = () => {
   const formTitle = `${formatDateDisplay(date)} ${titleSuffix}`;
 
   const submitToGoogleSheet = async () => {
-    if (!sheetUrl) {
-        console.warn("Google Sheet URL is not configured.");
-        return;
-    }
+    const targetUrl = sheetUrl || DEFAULT_SHEET_URL;
     
     try {
-      await fetch(sheetUrl, {
+      await fetch(targetUrl, {
         method: 'POST',
         mode: 'no-cors',
         headers: {
@@ -121,20 +120,12 @@ const App: React.FC = () => {
       return;
     }
 
-    if (!sheetUrl) {
-        const confirmSubmit = window.confirm("Google Spreadsheet가 연결되지 않았습니다.\nAI 피드백만 받고 내용을 저장하지 않으시겠습니까?");
-        if (!confirmSubmit) {
-            setActiveTab('settings');
-            return;
-        }
-    }
-
+    // Always submit to sheet if configured (which it is by default now)
+    
     setFormState(FormState.SUBMITTING);
     
     try {
-      if (sheetUrl) {
-        await submitToGoogleSheet();
-      }
+      await submitToGoogleSheet();
 
       const feedback = await analyzeReflection(formData);
       setResult(feedback);
@@ -168,10 +159,14 @@ const App: React.FC = () => {
       return `https://quickchart.io/qr?text=${encodeURIComponent(finalUrl)}&size=180&margin=1`;
   };
 
+  const toggleSettings = () => {
+    setActiveTab(prev => prev === 'questions' ? 'settings' : 'questions');
+  };
+
   if (formState === FormState.REVIEWING && result) {
     return (
       <div className="min-h-screen bg-purple-50 pb-12">
-        <FormHeader />
+        <FormHeader onSettingsClick={toggleSettings} />
         <ResultCard result={result} onReset={handleReset} />
       </div>
     );
@@ -255,51 +250,6 @@ const App: React.FC = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              1. 앱스 스크립트 코드 복사
-            </label>
-            <div className="bg-gray-800 text-gray-200 p-4 rounded text-sm font-mono overflow-x-auto relative group">
-              <pre>{`function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  var data = JSON.parse(e.postData.contents);
-  sheet.appendRow([
-    new Date(), 
-    data.formTitle, 
-    data.studentInfo, 
-    data.impressivePhrase, 
-    data.content
-  ]);
-  return ContentService.createTextOutput("Success");
-}`}</pre>
-              <button 
-                onClick={() => navigator.clipboard.writeText(`function doPost(e) {\n  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];\n  var data = JSON.parse(e.postData.contents);\n  sheet.appendRow([\n    new Date(), \n    data.formTitle, \n    data.studentInfo, \n    data.impressivePhrase, \n    data.content\n  ]);\n  return ContentService.createTextOutput("Success");\n}`)}
-                className="absolute top-2 right-2 bg-white text-gray-800 px-2 py-1 rounded text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                복사하기
-              </button>
-            </div>
-          </div>
-
-          <div className="text-sm text-gray-600 space-y-3 bg-gray-50 p-4 rounded border border-gray-200">
-            <p className="font-bold text-gray-900">배포 순서</p>
-            <ol className="list-decimal pl-5 space-y-2">
-                <li>위 링크의 스프레드시트를 열고, <strong>확장 프로그램 &gt; Apps Script</strong> 클릭</li>
-                <li>기존 코드를 지우고 위 코드를 붙여넣기 후 <strong>저장(Disk 아이콘)</strong></li>
-                <li>우측 상단 <strong>배포 &gt; 새 배포</strong> 클릭</li>
-                <li>유형 선택: <strong>웹 앱</strong></li>
-                <li>
-                    <strong className="text-purple-700">설정 (중요!)</strong>
-                    <ul className="list-disc pl-4 mt-1 space-y-1 text-gray-700">
-                        <li>다음 사용자 권한으로 실행: <span className="bg-yellow-100 px-1 rounded font-bold">나 (Me)</span></li>
-                        <li>액세스 권한이 있는 사용자: <span className="bg-yellow-100 px-1 rounded font-bold">모든 사용자 (Anyone)</span></li>
-                    </ul>
-                </li>
-                <li>배포 클릭 및 권한 승인 ("안전하지 않음"으로 이동하여 허용)</li>
-                <li>생성된 <strong>웹 앱 URL</strong>을 복사하여 아래 칸에 붙여넣기</li>
-            </ol>
-          </div>
-
-          <div className="pt-4 border-t border-gray-200">
-            <label className="block text-sm font-bold text-gray-900 mb-1">
               Google Apps Script 웹 앱 URL
             </label>
             <input 
@@ -310,7 +260,7 @@ const App: React.FC = () => {
               className="w-full p-3 border border-gray-300 rounded focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all"
             />
             <p className="text-xs text-gray-500 mt-2">
-              * 이 주소는 학생 공유용이 아닙니다. 데이터 저장용 백엔드 주소입니다.
+              * 자동으로 설정된 URL입니다. 변경이 필요한 경우에만 수정하세요.
             </p>
           </div>
         </div>
@@ -320,26 +270,10 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-purple-50 pb-20 font-sans">
-      <FormHeader />
+      <FormHeader onSettingsClick={toggleSettings} />
 
       <div className="max-w-3xl mx-auto mt-4 px-4 relative">
-        {/* Tabs */}
-        <div className="flex justify-center border-b border-gray-300 mb-6 bg-transparent">
-          <button 
-            onClick={() => setActiveTab('questions')}
-            className={`px-6 py-3 font-medium border-b-2 transition-colors ${activeTab === 'questions' ? 'border-purple-800 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-          >
-            질문
-          </button>
-          <button 
-            onClick={() => setActiveTab('settings')}
-            className={`px-6 py-3 font-medium border-b-2 transition-colors ${activeTab === 'settings' ? 'border-purple-800 text-purple-800' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
-          >
-            설정
-            {!sheetUrl && <span className="ml-2 w-2 h-2 bg-red-500 rounded-full inline-block mb-1"></span>}
-          </button>
-        </div>
-
+        
         {activeTab === 'questions' && (
           <div className="space-y-4 animate-fade-in-up">
             {/* Title Card */}

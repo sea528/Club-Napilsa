@@ -18,7 +18,8 @@ import {
   QrCode,
   Copy,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Settings
 } from 'lucide-react';
 
 export const Icons = {
@@ -40,5 +41,6 @@ export const Icons = {
   QrCode: QrCode,
   Copy: Copy,
   ChevronLeft: ChevronLeft,
-  ChevronRight: ChevronRight
+  ChevronRight: ChevronRight,
+  Settings: Settings
 };
