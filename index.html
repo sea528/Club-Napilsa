@@ -73,8 +73,13 @@
   <body>
     <div id="root"></div>
     <div id="loading-screen">
-      <div className="spinner"></div>
+      <div class="spinner"></div>
       <p style="margin-top: 1rem; color: #6b21a8; font-weight: 500;">나필사 로딩중...</p>
     </div>
+    <script>
+      // Polyfill process.env to prevent crashes in browser environments if not defined
+      window.process = window.process || { env: {} };
+    </script>
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

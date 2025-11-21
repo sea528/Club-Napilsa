@@ -1,9 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { FeedbackResponse, FormData } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export const analyzeReflection = async (data: FormData): Promise<FeedbackResponse> => {
+  // Lazy initialization to prevent "process is not defined" or missing API key errors at startup
+  const apiKey = process.env.API_KEY;
+  
+  // Note: In a production environment, ensure API_KEY is injected via build process or env variables.
+  if (!apiKey) {
+    console.warn("Gemini API Key is missing.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: apiKey || '' });
   const model = "gemini-2.5-flash";
   
   const prompt = `
