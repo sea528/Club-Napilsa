@@ -24,8 +24,8 @@ const App: React.FC = () => {
 
   // Split Title State
   const [date, setDate] = useState(getTodayString);
-  const [titleSuffix, setTitleSuffix] = useState("나필사");
-  const [formDescription, setFormDescription] = useState("설문지 설명");
+  const [titleSuffix, setTitleSuffix] = useState("");
+  const [formDescription, setFormDescription] = useState("나를 사랑하는 필사");
   
   // Date Picker Visibility
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -355,7 +355,7 @@ const App: React.FC = () => {
                   type="text" 
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  className="text-gray-600 text-sm w-full border-b border-transparent focus:border-purple-700 hover:border-gray-200 outline-none transition-colors bg-transparent"
+                  className="text-purple-800 text-4xl w-full border-b border-transparent focus:border-purple-700 hover:border-gray-200 outline-none transition-colors bg-transparent font-['Nanum_Brush_Script'] pt-2"
                 />
               </div>
             </div>
