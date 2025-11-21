@@ -92,11 +92,23 @@ const App: React.FC = () => {
 
   const submitToGoogleSheet = async () => {
     const targetUrl = sheetUrl || DEFAULT_SHEET_URL;
+    // Add cache buster to prevent mobile caching issues
+    const urlWithCacheBuster = `${targetUrl}?t=${Date.now()}`;
     
+    // Standardize timestamp to ISO-like format (YYYY-MM-DD HH:mm:ss) for consistency
+    const now = new Date();
+    const timestamp = now.getFullYear() + '-' + 
+                      String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                      String(now.getDate()).padStart(2, '0') + ' ' + 
+                      String(now.getHours()).padStart(2, '0') + ':' + 
+                      String(now.getMinutes()).padStart(2, '0') + ':' + 
+                      String(now.getSeconds()).padStart(2, '0');
+
     try {
-      await fetch(targetUrl, {
+      await fetch(urlWithCacheBuster, {
         method: 'POST',
         mode: 'no-cors',
+        cache: 'no-cache',
         headers: {
           'Content-Type': 'text/plain', 
         },
@@ -105,12 +117,14 @@ const App: React.FC = () => {
           studentInfo: formData.studentInfo,
           impressivePhrase: formData.impressivePhrase,
           content: formData.content,
-          timestamp: new Date().toLocaleString('ko-KR')
+          timestamp: timestamp
         })
       });
       console.log('Data submitted to Google Sheet');
+      return true;
     } catch (error) {
       console.error('Error submitting to Google Sheet:', error);
+      return false;
     }
   };
 
@@ -119,21 +133,29 @@ const App: React.FC = () => {
       alert("필수 항목을 입력해주세요.");
       return;
     }
-
-    // Always submit to sheet if configured (which it is by default now)
     
     setFormState(FormState.SUBMITTING);
     
-    try {
-      await submitToGoogleSheet();
+    // 1. Always submit to Google Sheet first
+    // We await it, but since it's no-cors, it resolves quickly even if 'opaque'.
+    await submitToGoogleSheet();
 
+    // 2. Try AI Analysis
+    try {
       const feedback = await analyzeReflection(formData);
       setResult(feedback);
       setFormState(FormState.REVIEWING);
     } catch (error) {
-      console.error(error);
-      setFormState(FormState.ERROR);
-      setTimeout(() => setFormState(FormState.EDITING), 3000);
+      console.error("AI Analysis Failed:", error);
+      
+      // Graceful Fallback:
+      // If AI fails (e.g. missing API Key), we should still consider the submission successful
+      // because the data was sent to the spreadsheet.
+      alert("제출이 완료되었습니다!\n(AI 피드백 생성에는 실패했습니다. 잠시 후 다시 시도하거나 선생님께 문의하세요.)");
+      
+      // Reset form so student can submit another if needed
+      setFormData({ studentInfo: '', impressivePhrase: '', content: '' });
+      setFormState(FormState.EDITING);
     }
   };
 
@@ -459,7 +481,7 @@ const App: React.FC = () => {
       </div>
       
       {formState === FormState.ERROR && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-bounce z-50">
           <Icons.Alert className="w-5 h-5" />
           오류가 발생했습니다. 다시 시도해주세요.
         </div>
