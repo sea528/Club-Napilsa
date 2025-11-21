@@ -141,6 +141,11 @@ const App: React.FC = () => {
       alert("필수 항목을 입력해주세요.");
       return;
     }
+
+    if (formData.content.length < 50) {
+      alert("느낀점과 의견을 50자 이상 작성해주세요.");
+      return;
+    }
     
     setFormState(FormState.SUBMITTING);
     
@@ -433,9 +438,9 @@ const App: React.FC = () => {
               {activeField === 'content' && <FloatingSidebar />}
               
               <label className="block text-base text-gray-900 mb-2">
-                필사한 오늘 내용과 느낀점 등을 잘 적어주세요 OREO원칙에 맞게 적어주세요 <span className="text-red-500">*</span>
+                감명깊은 문구에 대해 느낀점과 의견 적기 <span className="text-red-500">*</span>
               </label>
-              <p className="text-xs text-gray-500 mb-6">장문형 텍스트</p>
+              <p className="text-xs text-gray-500 mb-6">OREO 원칙에 맞게 적기 (50자 이상)</p>
               
               <textarea
                 name="content"
@@ -445,6 +450,10 @@ const App: React.FC = () => {
                 rows={6}
                 className="w-full border-b border-gray-200 focus:border-purple-700 outline-none py-2 text-gray-700 transition-colors resize-none bg-transparent placeholder-gray-400"
               />
+               
+              <div className={`text-right text-xs mt-2 font-medium ${formData.content.length < 50 && formData.content.length > 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                {formData.content.length} / 50자 이상
+              </div>
 
                {activeField === 'content' && (
                 <div className="mt-8 pt-4 border-t border-gray-100 flex justify-end items-center gap-4">
